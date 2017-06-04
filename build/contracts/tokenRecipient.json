@@ -1,0 +1,82 @@
+{
+  "contract_name": "tokenRecipient",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "name": "_value",
+          "type": "uint256"
+        },
+        {
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "name": "_extraData",
+          "type": "bytes"
+        }
+      ],
+      "name": "receiveApproval",
+      "outputs": [],
+      "payable": false,
+      "type": "function"
+    },
+    {
+      "payable": true,
+      "type": "fallback"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "sender",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "receivedEther",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "_value",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "name": "_extraData",
+          "type": "bytes"
+        }
+      ],
+      "name": "receivedTokens",
+      "type": "event"
+    }
+  ],
+  "unlinked_binary": "0x6060604052341561000c57fe5b5b61027b8061001c6000396000f300606060405236156100255763ffffffff60e060020a6000350416638f4ffcb18114610071575b61006f5b60408051600160a060020a033316815234602082015281517fa398b89ba344a0b23a0b9de53db298b2a1a868b396c1878b7e9dcbafecd49b13929181900390910190a15b565b005b341561007957fe5b604080516020600460643581810135601f810184900484028501840190955284845261006f948235600160a060020a03908116956024803596604435909316959460849492939101919081908401838280828437509496506100df95505050505050565b005b6040805160006020918201819052825160e060020a6323b872dd028152600160a060020a038881166004830152308116602483015260448201889052935186948516936323b872dd936064808501949293928390030190829087803b151561014357fe5b6102c65a03f1151561015157fe5b505060405151151590506101655760006000fd5b7f0eeb71b8926d7ed8f47a2cedf6b9b204e2001344c7fa20c696c9f06ea7c413c6858585856040518085600160a060020a0316600160a060020a0316815260200184815260200183600160a060020a0316600160a060020a031681526020018060200182810382528381815181526020019150805190602001908083836000831461020b575b80518252602083111561020b57601f1990920191602091820191016101eb565b505050905090810190601f1680156102375780820380516001836020036101000a031916815260200191505b509550505050505060405180910390a15b50505050505600a165627a7a723058202ff93d818023503392294cdef4fa583619631e22319e9b0ba587a344beee17370029",
+  "networks": {},
+  "schema_version": "0.0.5",
+  "updated_at": 1496557592869
+}
