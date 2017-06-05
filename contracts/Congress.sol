@@ -6,9 +6,7 @@ import "./tokenRecipient.sol";
 contract Congress is owned, tokenRecipient {
 
   /* Contract Variables and events */
-  uint public minimumQuorum;
-  uint public debatingPeriodInMinutes;
-  int public majorityMargin;
+  string name;
   Proposal[] public proposals;
   uint public numProposals;
   mapping (address => uint) public memberId;
@@ -17,36 +15,21 @@ contract Congress is owned, tokenRecipient {
   event ProposalAdded(
     uint proposalID,
     address recipient,
-    uint amount,
     string description
   );
 
   event Voted(
     uint proposalID,
-    bool position,
-    address voter,
-    string justification
+    address voter
   );
-
-  event ProposalTallied(uint proposalID, int result, uint quorum, bool active);
 
   event MembershipChanged(address member, bool isMember);
-
-  event ChangeOfRules(
-    uint minimumQuorum,
-    uint debatingPeriodInMinutes,
-    int majorityMargin
-  );
 
   struct Proposal {
     address recipient;
     uint amount;
     string description;
-    uint votingDeadline;
-    bool executed;
-    bool proposalPassed;
     uint numberOfVotes;
-    int currentResult;
     bytes32 proposalHash;
     Vote[] votes;
     mapping (address => bool) voted;
@@ -61,29 +44,21 @@ contract Congress is owned, tokenRecipient {
   struct Vote {
     bool inSupport;
     address voter;
-    string justification;
   }
 
   /* modifier that allows only shareholders to vote and create new proposals */
   modifier onlyMembers {
-    if (memberId[msg.sender] == 0)
-    throw;
+    if (memberId[msg.sender] == 0) throw;
     _;
   }
 
   /* First time setup */
   function Congress(
-    uint minimumQuorumForProposals,
-    uint minutesForDebate,
-    int marginOfVotesForMajority,
+    string _name,
     address congressLeader
   ) payable {
-    changeVotingRules(
-      minimumQuorumForProposals,
-      minutesForDebate,
-      marginOfVotesForMajority
-    );
     if (congressLeader != 0) owner = congressLeader;
+    name = _name;
     // It’s necessary to add an empty first member
     addMember(0, '');
     // and let's add the founder, to save a step later
@@ -92,20 +67,15 @@ contract Congress is owned, tokenRecipient {
 
   /*make member*/
   function addMember(address targetMember, string memberName) onlyOwner {
+    if (memberId[targetMember] != 0) return;
     uint id;
-    if (memberId[targetMember] == 0) {
-      memberId[targetMember] = members.length;
-      id = members.length++;
-      members[id] = Member({
-        member: targetMember,
-        memberSince: now,
-        name: memberName
-      });
-    } else {
-      id = memberId[targetMember];
-      Member m = members[id];
-    }
-
+    memberId[targetMember] = members.length;
+    id = members.length++;
+    members[id] = Member({
+      member: targetMember,
+      memberSince: now,
+      name: memberName
+    });
     MembershipChanged(targetMember, true);
   }
 
@@ -118,19 +88,6 @@ contract Congress is owned, tokenRecipient {
 
     delete members[members.length - 1];
     members.length--;
-  }
-
-  /*change rules*/
-  function changeVotingRules(
-    uint minimumQuorumForProposals,
-    uint minutesForDebate,
-    int marginOfVotesForMajority
-  ) onlyOwner {
-    minimumQuorum = minimumQuorumForProposals;
-    debatingPeriodInMinutes = minutesForDebate;
-    majorityMargin = marginOfVotesForMajority;
-
-    ChangeOfRules(minimumQuorum, debatingPeriodInMinutes, majorityMargin);
   }
 
   /* Function to create a new proposal */
@@ -149,12 +106,9 @@ contract Congress is owned, tokenRecipient {
     p.amount = etherAmount;
     p.description = JobDescription;
     p.proposalHash = sha3(beneficiary, etherAmount, transactionBytecode);
-    p.votingDeadline = now + debatingPeriodInMinutes * 1 minutes;
-    p.executed = false;
-    p.proposalPassed = false;
     p.numberOfVotes = 0;
-    ProposalAdded(proposalID, beneficiary, etherAmount, JobDescription);
-    numProposals = proposalID+1;
+    ProposalAdded(proposalID, beneficiary, JobDescription);
+    numProposals = proposalID + 1;
 
     return proposalID;
   }
@@ -177,63 +131,13 @@ contract Congress is owned, tokenRecipient {
     );
   }
 
-  function vote(
-    uint proposalNumber,
-    bool supportsProposal,
-    string justificationText
-  )
-    onlyMembers
-    returns (uint voteID)
-  {
+  function vote(uint proposalNumber) onlyMembers returns (uint voteID) {
     Proposal p = proposals[proposalNumber];  // Get the proposal
     if (p.voted[msg.sender] == true) throw;  // If has already voted, cancel
     p.voted[msg.sender] = true;              // Set this voter as having voted
-    p.numberOfVotes++;                       // Increase the number of votes
-    if (supportsProposal) {                  // If they support the proposal
-      p.currentResult++;                     // Increase score
-    } else {                                 // If they don't
-      p.currentResult--;                     // Decrease the score
-    }
+    p.numberOfVotes++;                       // Increase score
     // Create a log of this event
-    Voted(proposalNumber, supportsProposal, msg.sender, justificationText);
+    Voted(proposalNumber, msg.sender);
     return p.numberOfVotes;
-  }
-
-  function executeProposal(uint proposalNumber, bytes transactionBytecode) {
-    Proposal p = proposals[proposalNumber];
-    /* Check if the proposal can be executed:
-      - Has the voting deadline arrived?
-      - Has it been already executed or is it being executed?
-      - Does the transaction code match the proposal?
-      - Has a minimum quorum?
-    */
-
-    if (now < p.votingDeadline
-      || p.executed
-      || p.proposalHash != sha3(p.recipient, p.amount, transactionBytecode)
-      || p.numberOfVotes < minimumQuorum)
-      throw;
-
-    /* execute result */
-    /* If difference between support and opposition is larger than margin */
-    if (p.currentResult > majorityMargin) {
-      // Avoid recursive calling
-
-      p.executed = true;
-      if (!p.recipient.call.value(p.amount * 1 ether)(transactionBytecode)) {
-        throw;
-      }
-
-      p.proposalPassed = true;
-    } else {
-      p.proposalPassed = false;
-    }
-    // Fire Events
-    ProposalTallied(
-      proposalNumber,
-      p.currentResult,
-      p.numberOfVotes,
-      p.proposalPassed
-    );
   }
 }
