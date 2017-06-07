@@ -1,5 +1,5 @@
-var Congress = artifacts.require("./Congress.sol");
+var UnConf = artifacts.require("./UnConf.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(Congress);
+  deployer.deploy(UnConf, "UnConf");
 };

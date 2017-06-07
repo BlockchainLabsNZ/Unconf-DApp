@@ -43,8 +43,7 @@ contract UnConf is owned, tokenRecipient {
   }
 
   /* First time setup */
-  function UnConf(string _name, address confLeader) payable {
-    if (confLeader != 0) owner = confLeader;
+  function UnConf(string _name) payable {
     name = _name;
     // It’s necessary to add an empty first member
     addMember(0, '');
