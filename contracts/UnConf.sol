@@ -3,34 +3,24 @@ pragma solidity ^0.4.11;
 import "./owned.sol";
 import "./tokenRecipient.sol";
 
-contract Congress is owned, tokenRecipient {
+contract UnConf is owned, tokenRecipient {
 
   /* Contract Variables and events */
   string name;
-  Proposal[] public proposals;
+  Topic[] public topics;
   uint public numProposals;
   mapping (address => uint) public memberId;
   Member[] public members;
 
-  event ProposalAdded(
-    uint proposalID,
-    address recipient,
-    string description
-  );
-
-  event Voted(
-    uint proposalID,
-    address voter
-  );
-
+  event TopicAdded(uint topicID, address proposer, string description);
+  event Voted(uint topicID, address voter);
   event MembershipChanged(address member, bool isMember);
 
-  struct Proposal {
-    address recipient;
+  struct Topic {
+    address proposer;
     uint amount;
     string description;
     uint numberOfVotes;
-    bytes32 proposalHash;
     Vote[] votes;
     mapping (address => bool) voted;
   }
@@ -53,11 +43,8 @@ contract Congress is owned, tokenRecipient {
   }
 
   /* First time setup */
-  function Congress(
-    string _name,
-    address congressLeader
-  ) payable {
-    if (congressLeader != 0) owner = congressLeader;
+  function UnConf(string _name, address confLeader) payable {
+    if (confLeader != 0) owner = confLeader;
     name = _name;
     // It’s necessary to add an empty first member
     addMember(0, '');
@@ -91,53 +78,28 @@ contract Congress is owned, tokenRecipient {
   }
 
   /* Function to create a new proposal */
-  function newProposal(
-    address beneficiary,
-    uint etherAmount,
-    string JobDescription,
-    bytes transactionBytecode
-  )
+  function newProposal(string topicDescription)
     onlyMembers
-    returns (uint proposalID)
+    returns (uint topicID)
   {
-    proposalID = proposals.length++;
-    Proposal p = proposals[proposalID];
-    p.recipient = beneficiary;
-    p.amount = etherAmount;
-    p.description = JobDescription;
-    p.proposalHash = sha3(beneficiary, etherAmount, transactionBytecode);
+    topicID = topics.length++;
+    Topic p = topics[topicID];
+    p.proposer = msg.sender;
+    p.description = topicDescription;
     p.numberOfVotes = 0;
-    ProposalAdded(proposalID, beneficiary, JobDescription);
-    numProposals = proposalID + 1;
+    TopicAdded(topicID, msg.sender, topicDescription);
+    numProposals = topicID + 1;
 
-    return proposalID;
+    return topicID;
   }
 
-  /* function to check if a proposal code matches */
-  function checkProposalCode(
-    uint proposalNumber,
-    address beneficiary,
-    uint etherAmount,
-    bytes transactionBytecode
-  )
-    constant
-    returns (bool codeChecksOut)
-  {
-    Proposal p = proposals[proposalNumber];
-    return p.proposalHash == sha3(
-      beneficiary,
-      etherAmount,
-      transactionBytecode
-    );
-  }
-
-  function vote(uint proposalNumber) onlyMembers returns (uint voteID) {
-    Proposal p = proposals[proposalNumber];  // Get the proposal
+  function vote(uint topicID) onlyMembers returns (uint voteID) {
+    Topic p = topics[topicID];               // Get the proposal
     if (p.voted[msg.sender] == true) throw;  // If has already voted, cancel
     p.voted[msg.sender] = true;              // Set this voter as having voted
     p.numberOfVotes++;                       // Increase score
     // Create a log of this event
-    Voted(proposalNumber, msg.sender);
+    Voted(topicID, msg.sender);
     return p.numberOfVotes;
   }
 }
