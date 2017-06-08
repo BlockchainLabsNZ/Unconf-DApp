@@ -53,7 +53,7 @@ contract UnConf is owned, tokenRecipient {
 
   /*make member*/
   function addMember(address targetMember, string memberName) onlyOwner returns (bool success){
-    if (memberId[targetMember] != 0) return;
+    if (memberId[targetMember] != 0) return false;
     uint id;
     memberId[targetMember] = members.length;
     id = members.length++;
@@ -64,6 +64,18 @@ contract UnConf is owned, tokenRecipient {
     });
     MembershipChanged(targetMember, true);
     return true;
+  }
+
+  function getMemberName(address targetMember) constant returns (string name) {
+    uint member_id = memberId[targetMember];
+    if (member_id == 0) throw;
+    return members[member_id].name;
+  }
+
+  function getMemberSince(address targetMember) constant returns (uint since) {
+    uint member_id = memberId[targetMember];
+    if (member_id == 0) throw;
+    return members[member_id].memberSince;
   }
 
   function removeMember(address targetMember) onlyOwner {
