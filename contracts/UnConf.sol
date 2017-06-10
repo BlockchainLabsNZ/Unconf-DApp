@@ -6,7 +6,7 @@ import "./tokenRecipient.sol";
 contract UnConf is owned, tokenRecipient {
 
   /* Contract Variables and events */
-  string name;
+  string public name;
   Topic[] public topics;
   uint public numProposals;
   mapping (address => uint) public memberId;
@@ -52,7 +52,7 @@ contract UnConf is owned, tokenRecipient {
   }
 
   /*make member*/
-  function addMember(address targetMember, string memberName) onlyOwner returns (bool success){
+  function addMember(address targetMember, string memberName) returns (bool success){
     if (memberId[targetMember] != 0) return false;
     uint id;
     memberId[targetMember] = members.length;
@@ -64,6 +64,17 @@ contract UnConf is owned, tokenRecipient {
     });
     MembershipChanged(targetMember, true);
     return true;
+  }
+
+  function getVoteCount() constant onlyOwner returns (uint[] votes) {
+    for(uint i = 0; i < topics.length; i++) {
+      votes[i] = topics[i].numberOfVotes;
+    }
+    return votes;
+  }
+
+  function getMembersCount() constant onlyOwner returns (uint count) {
+    return members.length;
   }
 
   function getMemberName(address targetMember) constant returns (string name) {
@@ -85,6 +96,7 @@ contract UnConf is owned, tokenRecipient {
       members[i] = members[i + 1];
     }
 
+    memberId[targetMember] = 0;
     delete members[members.length - 1];
     members.length--;
   }
