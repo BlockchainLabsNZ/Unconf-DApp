@@ -26,12 +26,24 @@ contract("UnConf", function(accounts) {
     UnConf.new("UnConf", { from: accounts[0] })
       .then(function(result) {
         crt = result;
+        return crt.numTopics.call();
+      })
+      .then(function(result) {
+        assert.strictEqual(result.toNumber(), 0);
         return crt.newProposal("BlockChain", { from: accounts[0] });
       })
       .then(function(result) {
+        return crt.numTopics.call();
+      })
+      .then(function(result) {
+        assert.strictEqual(result.toNumber(), 1);
         return crt.newProposal("Ethereum", { from: accounts[0] });
       })
       .then(function(result) {
+        return crt.numTopics.call();
+      })
+      .then(function(result) {
+        assert.strictEqual(result.toNumber(), 2);
         return crt.vote(0, { from: accounts[0] });
       })
       .then(function(result) {

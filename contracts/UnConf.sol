@@ -6,9 +6,9 @@ import "./tokenRecipient.sol";
 contract UnConf is owned, tokenRecipient {
 
   /* Contract Variables and events */
-  string public name;
+  string name;
   Topic[] public topics;
-  uint public numTopics;
+  uint numTopics;
   mapping (address => uint) public memberId;
   Member[] public members;
 
@@ -63,6 +63,15 @@ contract UnConf is owned, tokenRecipient {
     });
     MembershipChanged(targetMember, true);
     return true;
+  }
+
+
+  function getName() constant returns (string) {
+    return name;
+  }
+
+  function getNumTopics() constant returns (uint) {
+    return numTopics;
   }
 
   function getVoteCount() constant onlyOwner returns (uint[] votes) {
