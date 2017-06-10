@@ -8,7 +8,7 @@ contract UnConf is owned, tokenRecipient {
   /* Contract Variables and events */
   string public name;
   Topic[] public topics;
-  uint public numProposals;
+  uint public numTopics;
   mapping (address => uint) public memberId;
   Member[] public members;
 
@@ -18,7 +18,6 @@ contract UnConf is owned, tokenRecipient {
 
   struct Topic {
     address proposer;
-    uint amount;
     string description;
     uint numberOfVotes;
     Vote[] votes;
@@ -83,6 +82,13 @@ contract UnConf is owned, tokenRecipient {
     return members[member_id].name;
   }
 
+  function getTopicNameAndVotesAt(uint index) constant returns (string topicName, uint topicVotes) {
+    if (index >= topics.length) throw;
+
+    Topic topic = topics[index];
+    return (topic.description, topic.numberOfVotes);
+  }
+
   function getMemberSince(address targetMember) constant returns (uint since) {
     uint member_id = memberId[targetMember];
     if (member_id == 0) throw;
@@ -112,7 +118,7 @@ contract UnConf is owned, tokenRecipient {
     p.description = topicDescription;
     p.numberOfVotes = 0;
     TopicAdded(topicID, msg.sender, topicDescription);
-    numProposals = topicID + 1;
+    numTopics = topicID + 1;
 
     return topicID;
   }
