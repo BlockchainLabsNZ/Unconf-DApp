@@ -3,28 +3,6 @@ var factoryABI = [
     constant: true,
     inputs: [
       {
-        name: "index",
-        type: "uint256"
-      }
-    ],
-    name: "unconferenceAt",
-    outputs: [
-      {
-        name: "",
-        type: "string"
-      },
-      {
-        name: "",
-        type: "address"
-      }
-    ],
-    payable: false,
-    type: "function"
-  },
-  {
-    constant: true,
-    inputs: [
-      {
         name: "_name",
         type: "string"
       }
@@ -103,19 +81,6 @@ var unConfABI = [
       {
         name: "voteID",
         type: "uint256"
-      }
-    ],
-    payable: false,
-    type: "function"
-  },
-  {
-    constant: true,
-    inputs: [],
-    name: "name",
-    outputs: [
-      {
-        name: "",
-        type: "string"
       }
     ],
     payable: false,
@@ -220,49 +185,24 @@ var unConfABI = [
   {
     constant: true,
     inputs: [],
-    name: "owner",
+    name: "listTopics",
     outputs: [
       {
-        name: "",
-        type: "address"
+        name: "list",
+        type: "string"
       }
     ],
-    payable: false,
-    type: "function"
-  },
-  {
-    constant: false,
-    inputs: [
-      {
-        name: "_from",
-        type: "address"
-      },
-      {
-        name: "_value",
-        type: "uint256"
-      },
-      {
-        name: "_token",
-        type: "address"
-      },
-      {
-        name: "_extraData",
-        type: "bytes"
-      }
-    ],
-    name: "receiveApproval",
-    outputs: [],
     payable: false,
     type: "function"
   },
   {
     constant: true,
     inputs: [],
-    name: "numTopics",
+    name: "owner",
     outputs: [
       {
         name: "",
-        type: "uint256"
+        type: "address"
       }
     ],
     payable: false,
@@ -420,10 +360,6 @@ var unConfABI = [
     type: "constructor"
   },
   {
-    payable: true,
-    type: "fallback"
-  },
-  {
     anonymous: false,
     inputs: [
       {
@@ -478,54 +414,10 @@ var unConfABI = [
     ],
     name: "MembershipChanged",
     type: "event"
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        name: "sender",
-        type: "address"
-      },
-      {
-        indexed: false,
-        name: "amount",
-        type: "uint256"
-      }
-    ],
-    name: "receivedEther",
-    type: "event"
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        name: "_from",
-        type: "address"
-      },
-      {
-        indexed: false,
-        name: "_value",
-        type: "uint256"
-      },
-      {
-        indexed: false,
-        name: "_token",
-        type: "address"
-      },
-      {
-        indexed: false,
-        name: "_extraData",
-        type: "bytes"
-      }
-    ],
-    name: "receivedTokens",
-    type: "event"
   }
 ];
 
-var factoryAddress = "0x1400FD5eB69Ba437c439814529E5bEF2BDC61480";
+var factoryAddress = "0xC7141f3FE08c5028407e004cf9a7343A9e313625";
 var FactoryContract = web3.eth.contract(factoryABI);
 
 var UnConfContract = web3.eth.contract(unConfABI);
@@ -534,7 +426,6 @@ var CommandEnum = {
   CREATE_UNCONF: "createUnconf",
   REGISTER: "register",
   SHARE: "shareUnconf",
-  FIND: "findUnconf",
   ADD_TOPIC: "addTopic",
   LIST_TOPICS: "listTopics",
   VOTE_TOPIC: "voteForTopic"
@@ -544,9 +435,7 @@ var CommandEnum = {
  Greet the user with some lovely messages
 */
 status.addListener("init", function(params, context) {
-  status.sendMessage("Unconference Name: " + getUnconfName());
-
-  if (isFirstUse(false)) {
+  if (!isFirstUse(true)) {
     status.sendMessage("Welcome back - how may I help you today?");
     return;
   }
@@ -583,18 +472,7 @@ status.command({
   handler: function(params) {
     var unconfName = params.unconfName.trim();
     //Create Event and store address in local storage
-    status.sendMessage(
-      "Please wait while we set up your Unconference, this may take a second."
-    );
     deployContract(unconfName);
-    status.sendMessage("Success *" + unconfName + "* created!");
-    status.sendMessage(
-      "You can share *" +
-        unconfName +
-        "* with your attendees by sending them the below address"
-    );
-    //Send the address in a separate message for ease of copy/pasting
-    status.sendMessage(getUnconfAddress());
   }
 });
 
@@ -604,11 +482,25 @@ status.command({
   description: "Helps register for an Unconference",
   color: "#0000ff",
   sequentialParams: true,
+  preview: function(params) {
+    var text = status.components.text(
+      {},
+      "Unconference Name: " +
+        params.unconfName +
+        "\n" +
+        "Alias: " +
+        params.alias
+    );
+    return {
+      markup: status.components.view({}, [text])
+    };
+  },
   params: [
     {
       name: "unconfName",
       type: status.types.TEXT,
-      placeholder: "Unconference Name"
+      placeholder: "Unconference Name",
+      suggestions: unconfsSuggestions
     },
     {
       name: "alias",
@@ -638,30 +530,10 @@ status.command({
     setEventAddress(address);
     var unConfContractInstance = UnConfContract.at(address);
     if (unConfContractInstance.memberId(getUsersAddress()) == 0) {
-      status.sendMessage(
-        "Registering " + alias + " for " + unconfName + ", please wait"
-      );
       addMemberToChain(alias);
     } else {
       status.sendMessage("Joined as " + alias + " for " + unconfName);
     }
-  }
-});
-
-status.command({
-  name: CommandEnum.FIND,
-  title: "Find an Unconference to attend",
-  description: "Helps find an Unconference",
-  color: "#0000ff",
-  preview: function(params) {
-    var text = status.components.text({}, "");
-    return {
-      markup: status.components.view({}, [text])
-    };
-  },
-  handler: function(params) {
-    //Get Event Name and address from local storage
-    getAllUnconferences();
   }
 });
 
@@ -686,12 +558,12 @@ status.command({
     var unconfAddress = getUnconfAddress();
 
     status.sendMessage(
-      "You can share *" +
+      "Your attendees can register using " +
+        prettyPrintCommand(CommandEnum.REGISTER) +
+        " *" +
         unconfName +
-        "* with your attendees by sending them the below address"
+        "*"
     );
-    //Send the address in a separate message for ease of copy/pasting
-    status.sendMessage(getUnconfAddress());
   }
 });
 
@@ -717,6 +589,13 @@ status.command({
 
     var topicName = params.topicName.trim();
     addTopicToChain(topicName);
+  },
+  validator: function(params, context) {
+    if (params.topicName.indexOf("\\") > -1) {
+      return {
+        markup: status.components.validationMessage("Invalid character")
+      };
+    }
   }
 });
 
@@ -747,9 +626,10 @@ status.command({
   color: "#0000ff",
   params: [
     {
-      name: "topicID",
-      type: status.types.NUMBER,
-      placeholder: "Topic ID"
+      name: "topicName",
+      type: status.types.TEXT,
+      placeholder: "Topic Name",
+      suggestions: topicsSuggestions
     }
   ],
   handler: function(params) {
@@ -757,13 +637,27 @@ status.command({
       return;
     }
 
-    voteForTopicOnChain(params.topicID);
+    var contractAddress = getUnconfAddress();
+
+    // initiate contract for an address
+    var unConfContractInstance = UnConfContract.at(contractAddress);
+
+    // call constant function
+    var topics = unConfContractInstance.listTopics();
+    voteForTopicOnChain(topics.split("\n").indexOf(params.topicName));
   },
   validator: function(params, context) {
-    if (!isNumeric(params.topicID) || params.topicID < 0) {
+    var contractAddress = getUnconfAddress();
+
+    // initiate contract for an address
+    var unConfContractInstance = UnConfContract.at(contractAddress);
+
+    // call constant function
+    var topics = unConfContractInstance.listTopics();
+    if (topics.indexOf(params.topicName) == -1) {
       return {
         markup: status.components.validationMessage(
-          "Please enter a number greater than zero"
+          "Topic not found, please check your spelling and try again"
         )
       };
     }
@@ -781,34 +675,51 @@ function deployContract(eventName) {
   // call constant function
   var hash = factoryContractInstance.create(eventName, { from: usersAddress });
 
-  status.sendMessage("Please wait we're creating your Unconference now!");
-
-  if (waitForMining(hash).failed) {
+  if (
+    waitForMining(
+      "Please wait while we set up your Unconference, this may take a second.",
+      hash
+    ).failed
+  ) {
     return;
   }
 
-  var address = getUnconfAddressFromFactory(eventName);
+  var contractAddress = getUnconfAddressFromFactory(eventName);
 
-  if (!web3.isAddress(address)) {
+  if (!web3.isAddress(contractAddress)) {
+    status.sendMessage("Sorry something went wrong, please try again");
+    return;
+  }
+
+  // initiate contract for an address
+  var unConfContractInstance = UnConfContract.at(contractAddress);
+
+  // call constant function
+  var owner = unConfContractInstance.owner();
+
+  if (owner != getUsersAddress()) {
+    status.sendMessage(
+      "Sorry somebody has already created an Unconference using that name. " +
+        "Please use a unique name and try again \n" +
+        "*Hint:* You can use " +
+        prettyPrintCommand(CommandEnum.FIND) +
+        " to list all Unconferences"
+    );
     return;
   }
 
   //Store these details for later
-  setEventAddress(address);
+  setEventAddress(contractAddress);
   setEventName(eventName);
-}
 
-function getAllUnconferences() {
-  var usersAddress = getUsersAddress();
-
-  var contractAddress = getUnconfAddress();
-
-  // initiate contract for an address
-  var factoryContractInstance = FactoryContract.at(factoryAddress);
-
-  var unconferences = factoryContractInstance.listUnconferences();
-
-  status.sendMessage(unconferences);
+  status.sendMessage("Success *" + eventName + "* created!");
+  status.sendMessage(
+    "Your attendees can register using " +
+      prettyPrintCommand(CommandEnum.REGISTER) +
+      " *" +
+      eventName +
+      "*"
+  );
 }
 
 function getUnconfAddressFromFactory(unconfName) {
@@ -875,9 +786,9 @@ function addTopicToChain(topicName) {
   // call constant function
   var hash = unConfContractInstance.newTopic(topicName, { from: usersAddress });
 
-  status.sendMessage("Please wait we're creating your topic now!");
-
-  if (waitForMining(hash).failed) {
+  if (
+    waitForMining("Please wait we're creating your topic now!", hash).failed
+  ) {
     status.sendMessage(
       "Oh no something didn't quite work as it should have, please try again!"
     );
@@ -897,14 +808,6 @@ function voteForTopicOnChain(topicID) {
 
   var numberOfTopics = unConfContractInstance.getNumTopics();
 
-  if (topicID >= numberOfTopics) {
-    status.sendMessage(
-      "Topic not found, please double check the ID by using " +
-        prettyPrintCommand(CommandEnum.LIST_TOPICS)
-    );
-    return;
-  }
-
   // call constant function
   unConfContractInstance.vote(
     topicID,
@@ -912,9 +815,10 @@ function voteForTopicOnChain(topicID) {
       from: usersAddress
     },
     function(error, hash) {
-      status.sendMessage("Please wait a second while we confirm your vote");
-
-      if (waitForMining(hash).failed) {
+      if (
+        waitForMining("Please wait a second while we confirm your vote", hash)
+          .failed
+      ) {
         return;
       }
 
@@ -939,7 +843,9 @@ function addMemberToChain(memberName) {
       from: usersAddress
     },
     function(error, hash) {
-      if (waitForMining(hash).failed) {
+      if (
+        waitForMining("Please wait a second while we register you", hash).failed
+      ) {
         return;
       }
 
@@ -965,7 +871,9 @@ function addMemberToChain(memberName) {
 }
 
 //Thanks https://github.com/morelazers
-function waitForMining(txHash) {
+function waitForMining(message, txHash) {
+  //As this may take some time, we should probably let the user know we're working on it
+  status.sendMessage(message);
   var mined = false;
   var receipt;
   while (!mined) {
@@ -1054,4 +962,81 @@ function checkUserIsRegestered() {
   }
 
   return true;
+}
+
+/*
+  Suggestions!
+*/
+function suggestionsContainerStyle(suggestionsCount) {
+  return {
+    marginVertical: 1,
+    marginHorizontal: 0,
+    keyboardShouldPersistTaps: "always",
+    height: Math.min(150, 56 * suggestionsCount),
+    backgroundColor: "white",
+    borderRadius: 5,
+    flexGrow: 1
+  };
+}
+var suggestionSubContainerStyle = {
+  height: 56,
+  justifyContent: "center",
+  padding: 20,
+  borderBottomWidth: 1,
+  borderBottomColor: "#0000001f"
+};
+
+var valueStyle = {
+  marginTop: 9,
+  fontSize: 14,
+  fontFamily: "font",
+  color: "#000000de"
+};
+
+function topicsSuggestions() {
+  var contractAddress = getUnconfAddress();
+
+  // initiate contract for an address
+  var unConfContractInstance = UnConfContract.at(contractAddress);
+
+  // call constant function
+  var topics = unConfContractInstance.listTopics();
+
+  return showSuggestions(topics.split("\n"));
+}
+
+function unconfsSuggestions() {
+  // initiate contract for an address
+  var factoryContractInstance = FactoryContract.at(factoryAddress);
+
+  var unconferences = factoryContractInstance.listUnconferences();
+
+  return showSuggestions(unconferences.split("\n"));
+}
+
+function showSuggestions(array) {
+  var suggestions = array.map(function(entry, index) {
+    return status.components.touchable(
+      {
+        onPress: status.components.dispatch([
+          status.events.SET_COMMAND_ARGUMENT,
+          [index, entry]
+        ])
+      },
+      status.components.view(suggestionsContainerStyle, [
+        status.components.view(suggestionSubContainerStyle, [
+          status.components.text({ style: valueStyle }, entry)
+        ])
+      ])
+    );
+  });
+
+  // Let's wrap those two touchable buttons in a scrollView
+  var view = status.components.scrollView(
+    suggestionsContainerStyle(2),
+    suggestions
+  );
+
+  // Give back the whole thing inside an object.
+  return { markup: view };
 }

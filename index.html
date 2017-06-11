@@ -13,19 +13,61 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Truffle Box</title>
+    <title>UnConf DApp</title>
   </head>
   <body>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+    <h1>UnConf DApp</h1>
+    <p>UnConf lets you create or participate in Unconferences</p>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start`.
-      To create a production bundle, use `npm run build`.
-    -->
+    <h2>Commands</h2>
+    <ul>
+      <li>
+        <div>
+          <h3>\createUnconf</h3>
+          <p>This command will deploy a new UnConf contract on the Blockchain.</p>
+          <strong>Params<strong>
+          <ul>
+            <li><strong>Unconference name<strong> a short name for the UnConference (must be unique).</li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>\register</h3>
+          <p>This will add you to the members' list of an existing UnConference.</p>
+          <strong>Params<strong>
+          <ul>
+            <li><strong>Unconference name<strong> the name of the UnConference that you wish to join.</li>
+            <li><strong>Alias<strong> an Alias that will be associated to your address for this UnConference.</li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>\addTopic</h3>
+          <p>This will add a new topic to the UnConference.</p>
+          <strong>Params<strong>
+          <ul>
+            <li><strong>Topic Name<strong> the name of topic to add to the list (must be unique per UnConference).</li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>\voteForTopic</h3>
+          <p>This will add an upvote for an existing topic.</p>
+          <strong>Params<strong>
+          <ul>
+            <li><strong>Topic Name<strong> the name of topic that you want to support.</li>
+          </ul>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>\listTopics</h3>
+          <p>This will return a ranking with all of the topics and number of votes per topic.</p>
+        </div>
+      </li>
+    </ul>
   </body>
 </html>
