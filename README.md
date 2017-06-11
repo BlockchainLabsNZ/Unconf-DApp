@@ -1,3 +1,16 @@
+# DApp and bot for Status.im
+
+Hackathon GitHub Issue: https://github.com/status-im/hackathon/issues/17
+
+```
+{
+  "whisper-identity": "17-unconf-decentralized-unconference-planner",
+  "name":             "#17 Unconf - Decentralized Unconference Planner",
+  "dapp-url":         "https://blockchainlabsnz.github.io/Unconf-DApp/index.html",
+  "bot-url":          "https://blockchainlabsnz.github.io/Unconf-DApp/bot/bot.js"
+}
+```
+
 ## Unconf-DApp
 Decentralized Unconference Planner
 
