@@ -1,8 +1,10 @@
 pragma solidity ^0.4.11;
 
 import "./owned.sol";
+import "./strings.sol";
 
 contract UnConf is owned {
+  using strings for *;
 
   /* Contract Variables and events */
   string name;
@@ -73,6 +75,14 @@ contract UnConf is owned {
 
   function getNumTopics() constant returns (uint) {
     return numTopics;
+  }
+
+  function listTopics() constant public returns(string list) {
+    for(uint i = 0; i < topics.length; i++) {
+      if (i > 0) list = list.toSlice().concat("\n".toSlice());
+      list = list.toSlice().concat(topics[i].description.toSlice());
+    }
+    return list;
   }
 
   function getVoteCount() constant onlyOwner returns (uint[] votes) {
