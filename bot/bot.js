@@ -544,7 +544,9 @@ var CommandEnum = {
  Greet the user with some lovely messages
 */
 status.addListener("init", function(params, context) {
-  if (!isFirstUse()) {
+  status.sendMessage("Unconference Name: " + getUnconfName());
+
+  if (isFirstUse(false)) {
     status.sendMessage("Welcome back - how may I help you today?");
     return;
   }
@@ -647,32 +649,6 @@ status.command({
 });
 
 status.command({
-  name: CommandEnum.SHARE,
-  title: "Share this Unconference",
-  description: "Helps share an Unconference",
-  color: "#0000ff",
-  preview: function(params) {
-    var text = status.components.text({}, "");
-    return {
-      markup: status.components.view({}, [text])
-    };
-  },
-  handler: function(params) {
-    //Get Event Name and address from local storage
-    var unconfName = getUnconfName();
-    var unconfAddress = getUnconfAddress();
-
-    status.sendMessage(
-      "You can share *" +
-        unconfName +
-        "* with your attendees by sending them the below address"
-    );
-    //Send the address in a separate message for ease of copy/pasting
-    status.sendMessage(getUnconfAddress());
-  }
-});
-
-status.command({
   name: CommandEnum.FIND,
   title: "Find an Unconference to attend",
   description: "Helps find an Unconference",
@@ -688,6 +664,37 @@ status.command({
     getAllUnconferences();
   }
 });
+
+status.command({
+  name: CommandEnum.SHARE,
+  title: "Share this Unconference",
+  description: "Helps share an Unconference",
+  color: "#0000ff",
+  preview: function(params) {
+    var text = status.components.text({}, "");
+    return {
+      markup: status.components.view({}, [text])
+    };
+  },
+  handler: function(params) {
+    //Get Event Name and address from local storage
+    if (!checkUserIsRegestered()) {
+      return;
+    }
+
+    var unconfName = getUnconfName();
+    var unconfAddress = getUnconfAddress();
+
+    status.sendMessage(
+      "You can share *" +
+        unconfName +
+        "* with your attendees by sending them the below address"
+    );
+    //Send the address in a separate message for ease of copy/pasting
+    status.sendMessage(getUnconfAddress());
+  }
+});
+
 /*
  Once the user has selected an event here are the topic options
  */
@@ -704,6 +711,10 @@ status.command({
     }
   ],
   handler: function(params) {
+    if (!checkUserIsRegestered()) {
+      return;
+    }
+
     var topicName = params.topicName.trim();
     addTopicToChain(topicName);
   }
@@ -721,6 +732,10 @@ status.command({
     };
   },
   handler: function(params) {
+    if (!checkUserIsRegestered()) {
+      return;
+    }
+
     getAlltopics();
   }
 });
@@ -738,6 +753,10 @@ status.command({
     }
   ],
   handler: function(params) {
+    if (!checkUserIsRegestered()) {
+      return;
+    }
+
     voteForTopicOnChain(params.topicID);
   },
   validator: function(params, context) {
@@ -752,7 +771,7 @@ status.command({
 });
 
 /*
- General functions
+ General factory functions
 */
 function deployContract(eventName) {
   var usersAddress = getUsersAddress();
@@ -779,6 +798,36 @@ function deployContract(eventName) {
   setEventName(eventName);
 }
 
+function getAllUnconferences() {
+  var usersAddress = getUsersAddress();
+
+  var contractAddress = getUnconfAddress();
+
+  // initiate contract for an address
+  var factoryContractInstance = FactoryContract.at(factoryAddress);
+
+  var unconferences = factoryContractInstance.listUnconferences();
+
+  status.sendMessage(unconferences);
+}
+
+function getUnconfAddressFromFactory(unconfName) {
+  var factoryContractInstance = FactoryContract.at(factoryAddress);
+
+  var address = factoryContractInstance.findUnConference(unconfName);
+
+  if (!web3.isAddress(address)) {
+    status.sendMessage(
+      "Oh no something didn't quite work as it should have, please try again!"
+    );
+    return;
+  }
+  return address;
+}
+
+/*
+ General Unconference functions
+*/
 function getAlltopics() {
   var usersAddress = getUsersAddress();
 
@@ -813,33 +862,6 @@ function getAlltopics() {
   }
 
   status.sendMessage(message);
-}
-
-function getAllUnconferences() {
-  var usersAddress = getUsersAddress();
-
-  var contractAddress = getUnconfAddress();
-
-  // initiate contract for an address
-  var factoryContractInstance = FactoryContract.at(factoryAddress);
-
-  var unconferences = factoryContractInstance.listUnconferences();
-
-  status.sendMessage(unconferences);
-}
-
-function getUnconfAddressFromFactory(unconfName) {
-  var factoryContractInstance = FactoryContract.at(factoryAddress);
-
-  var address = factoryContractInstance.findUnConference(unconfName);
-
-  if (!web3.isAddress(address)) {
-    status.sendMessage(
-      "Oh no something didn't quite work as it should have, please try again!"
-    );
-    return;
-  }
-  return address;
 }
 
 function addTopicToChain(topicName) {
@@ -964,8 +986,12 @@ function waitForMining(txHash) {
 /*
   Local Storage getters
 */
-function isFirstUse() {
-  return localStorage.getItem("user_first_use");
+function isFirstUse(defValue) {
+  var result = localStorage.getItem("user_first_use");
+  if (result == null) {
+    return defValue;
+  }
+  return result;
 }
 
 function getUsersAlias() {
@@ -1020,7 +1046,7 @@ function prettyPrintCommand(command) {
 }
 
 function checkUserIsRegestered() {
-  if (!getUnconfAddress()) {
+  if (getUnconfAddress() == null) {
     status.sendMessage(
       "Sorry but you'll need to register for an unconference before you can do that"
     );
