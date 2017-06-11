@@ -1,9 +1,8 @@
 pragma solidity ^0.4.11;
 
 import "./owned.sol";
-import "./tokenRecipient.sol";
 
-contract UnConf is owned, tokenRecipient {
+contract UnConf is owned {
 
   /* Contract Variables and events */
   string name;
@@ -42,7 +41,9 @@ contract UnConf is owned, tokenRecipient {
   }
 
   /* First time setup */
-  function UnConf(string _name) payable {
+  function UnConf(string _name, address _owner) payable {
+    if (_owner == 0) throw;
+    owner = _owner;
     name = _name;
     // It’s necessary to add an empty first member
     addMember(0, '');
@@ -104,20 +105,8 @@ contract UnConf is owned, tokenRecipient {
     return members[member_id].memberSince;
   }
 
-  function removeMember(address targetMember) onlyOwner {
-    if (memberId[targetMember] == 0) throw;
-
-    for (uint i = memberId[targetMember]; i < members.length - 1; i++) {
-      members[i] = members[i + 1];
-    }
-
-    memberId[targetMember] = 0;
-    delete members[members.length - 1];
-    members.length--;
-  }
-
   /* Function to create a new proposal */
-  function newProposal(string topicDescription)
+  function newTopic(string topicDescription)
     onlyMembers
     returns (uint topicID)
   {

@@ -3,7 +3,7 @@ var UnConf = artifacts.require("./UnConf.sol");
 contract("UnConf", function(accounts) {
   it("should add user", function(done) {
     var crt;
-    UnConf.new("UnConf", { from: accounts[0] })
+    UnConf.new("UnConf", accounts[0], { from: accounts[0] })
       .then(function(result) {
         crt = result;
         return crt.getMemberName(accounts[0]);
@@ -23,24 +23,24 @@ contract("UnConf", function(accounts) {
   });
   it("should add topics, vote and get votes", function(done) {
     var crt;
-    UnConf.new("UnConf", { from: accounts[0] })
+    UnConf.new("UnConf", accounts[0], { from: accounts[0] })
       .then(function(result) {
         crt = result;
-        return crt.numTopics.call();
+        return crt.getNumTopics.call();
       })
       .then(function(result) {
         assert.strictEqual(result.toNumber(), 0);
-        return crt.newProposal("BlockChain", { from: accounts[0] });
+        return crt.newTopic("BlockChain", { from: accounts[0] });
       })
       .then(function(result) {
-        return crt.numTopics.call();
+        return crt.getNumTopics.call();
       })
       .then(function(result) {
         assert.strictEqual(result.toNumber(), 1);
-        return crt.newProposal("Ethereum", { from: accounts[0] });
+        return crt.newTopic("Ethereum", { from: accounts[0] });
       })
       .then(function(result) {
-        return crt.numTopics.call();
+        return crt.getNumTopics.call();
       })
       .then(function(result) {
         assert.strictEqual(result.toNumber(), 2);
